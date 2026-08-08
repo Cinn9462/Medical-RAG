@@ -29,7 +29,8 @@ for subject, target in targets.items():
     sampled.append(subject_df.sample(target))
 
 medmcqa_sampled = pd.concat(sampled).sample(frac=1).reset_index(drop=True)
-medmcqa_sampled["source"] = "medmcqa"
+medmcqa_sampled["source"] = "MEDMCQA"
+medmcqa_sampled["id"] = range(1000)
 
 print(f"Total sampled: {len(medmcqa_sampled)}")
 print(f"Per-subject counts:\n{medmcqa_sampled['subject_name'].value_counts().sort_index()}\n")
@@ -76,12 +77,13 @@ for subject, target in targets.items():
     sampled.append(subject_df.sample(target))
 
 mmlu_sampled = pd.concat(sampled).sample(frac=1).reset_index(drop=True)
-mmlu_sampled["source"] = "mmlu"
+mmlu_sampled["source"] = "MMLU"
+mmlu_sampled["id"] = range(1000)
 
 print(f"Total sampled: {len(mmlu_sampled)}")
 print(f"Per-subject counts:\n{mmlu_sampled['subject'].value_counts().sort_index()}\n")
 
-mmlu_sampled = mmlu_sampled[["centerpiece", "options", "correct_options_idx", "subject", "source"]]
+mmlu_sampled = mmlu_sampled[["id", "centerpiece", "options", "correct_options_idx", "subject", "source"]]
 mmlu_sampled.to_csv("mmlu_1000.csv", index=False)
 
 # ========== MedMCQA 20 ==========
@@ -89,7 +91,8 @@ print("Loading MedMCQA 20...")
 medmcqa = load_dataset("openlifescienceai/medmcqa", split="validation")
 medmcqa_df = pd.DataFrame(medmcqa)
 sample_20 = medmcqa_df.sample(n=20).reset_index(drop=True)
-sample_20["source"] = "medmcqa"
+sample_20["source"] = "MEDMCQA"
+sample_20["id"] = range(20)
 sample_20 = sample_20[["id", "question", "opa", "opb", "opc", "opd", "cop", "subject_name", "source"]]
 
 sample_20.to_csv("medmcqa_20.csv", index=False)
