@@ -1,23 +1,22 @@
-id,question,opa,opb,opc,opd,cop,subject_name,source
-0,"Radiographs of a 40 year old female revealed radiolucent
-areas around several of her mandibular teeth, all which tested vital on the electric pulp tester. These areas represent",Multiple granulomas,Periapical osteofibroses,Chronic periapical abscesses,Bone hypoplasias associated with opalescent teeth,1,Pathology,MEDMCQA
-1,Ceramide is:,Simple lipid,Compound lipid,Precursor lipid,Derived lipid,0,Biochemistry,MEDMCQA
-2,What is the basis of behavior shaping:,Stimulus response theory,Social learning principle.,Hierarchy of needs,None of the above.,0,Dental,MEDMCQA
-3,Method of choice for a New born child not passing urine for 36 hours :,Ultrasound of kidney & bladder,CT Scan,Cystoscopy,X–ray pelvis,0,Pediatrics,MEDMCQA
-4,Which of the following is used to denote a continuous variable?,Simple bar,Histogram,Pie diagram,Multiple bar,1,Social & Preventive Medicine,MEDMCQA
-5,Which of the following is associated with HIV infection,Hairy leukoplakia,Erythroplakia,Oral Lichen planus,Bullous pemphigoid,0,Pathology,MEDMCQA
-6,Which of the following is not an autoimmune disorder?,Ulcerative colitis,Grave's disease,Rheumatoid ahritis,SLE,0,Medicine,MEDMCQA
-7,"After removal of periodontal pack after a week of surgery, you see a large round elevated granulation tissue. It is most likely due to:",Allergy to components in the pack,Normal finding,Incomplete calculus removal,Mechanical irritation due to periodontal pack,2,Dental,MEDMCQA
-8,Onodi cells and Haller cells are seen in relation to following respectively -,Optic nerve and floor of the orbit,Optic nerve and internal carotid artery,Optic nerve and nasolacrimal duct,Orbital floor and nasolacrimal duct,0,ENT,MEDMCQA
-9,What is seen in severe AS –,Pulsus bisferiens,Late ejection systolic click,Heaving shifted apex,Loud S2,1,Pediatrics,MEDMCQA
-10,"In a patient with post-tuberculosis bronchiectasis, which of the following will you observe on auscultation?",Late inspiratory crackles,Bibasilar crepts,Both early and late inspiratory crackles,Tubular breath sounds,2,Medicine,MEDMCQA
-11,Radiolucencies of the jaw may be seen in:,Multiple myeloma,Giant cell tumours,Hyperparathyroidism,All of the above,3,Radiology,MEDMCQA
-12,True about Total Goitre Rate (TGR) is:,It is an indicator of iron deficiency in the community,Community survey of TGR does not require doctors in the team,"Goitres are classified as not visible, palpable and visible","Goitres are classified as not visible, palpable and visible",3,Social & Preventive Medicine,MEDMCQA
-13,"To localize a supernumerary or an impacted tooth and
-determine its exact relationship to the other teeth, which of the following radiographs would be most effective?",A periapical and an occlusal view,An occlusal view using a high angle,A panoramic radiograph,Two or more periapical views at different angles and an occlusal view,3,Radiology,MEDMCQA
-14,Advantage of the submarginal falp for periradicular surgery is?,Crestal bone less,Bleeding lees,Gingival shrinking less,Flap closure easy,0,Dental,MEDMCQA
-15,Which of the local anesthetic agent can be given in liver failure cases?,Articaine,Lignocaine,Bupivacaine,Benzocaine,3,Dental,MEDMCQA
-16,Most common cause of interochanteric fracture in old is -,Osteoporosis,Paget's dis,Osteopetrosis,Osteomalacia,0,Surgery,MEDMCQA
-17,Glucosamines used in following condition:,Ahritis,Niemann pick disease,Alzheimer's disease,Cancer,0,Biochemistry,MEDMCQA
-18,Increased calories required during pregnancy:September 2012,300,400,550,800,0,Gynaecology & Obstetrics,MEDMCQA
-19,"A 6 days old neonate weighing 2800 gm (bih weight 3200 gm) was brought with the complaints of fever, poor feeding and poor activity. There was no history of vomiting or diarrhea. Axillary temperature was 39degC with depressed fontenalle, sunken eyes, decreased urine output and decreased skin turgor. Her mother has the history of decreased milk production. What is your diagnosis?",Neonatal sepsis,Galactosemia,Fever & dehydration,Acute renal failure,0,Pediatrics,MEDMCQA
+question,a,b,c,d,answer,source,id
+Pulmonary manifestation for inhalational anthrax,Hemorrhagic mediastinitis,Lobar consolidation,Bronchopneumonia with type two respiratory failure,Can cause pneumonia,0,MEDMCQA,0
+Histopathologic study of lichen planus shows:,Mixed cellular inflammatory infiltrate,Presence of T-Lymphocytes predominantly,Antiepithelial antibodies,Scattered infiltrate with ill-defined lower border,1,MEDMCQA,1
+"In a village, despite of health education for oral cancer, people don't follow instructions even after referral with persuasive reminders, people are still reluctant. It best fits under which model:",Trans-theoretical model,Health belief model,Social compliance,Public health model,0,MEDMCQA,2
+Earliest valvular lesion in a case of acute rheumatic fever is –,Mitral regurgitation (MR),Aortic Regurgitation(AR),Mitral stenosis (MS),Aortic Stenosis (AS),0,MEDMCQA,3
+Acid dissolution is most common in which part of rod,Periphery of head,Head region,Rod tails,equally,1,MEDMCQA,4
+What should be the best treatment option for the extraction socket shown in  Fig,Ovate Pontic,Modified ridge lap,Sanitary pontic,All of the above,0,MEDMCQA,5
+"Diabetes insipidus, bone lesions and exophthalmos is seen in",Sickle cell anemia,Niemen pick disease,Littere Siewe Disease,Hand-Schuller-Christian disease,3,MEDMCQA,6
+Scammon's growth curve. False is,Neural tissues-Most of the growth is completed by 6 years,Lymphoid tissues — growth reaches 200%  by age 13 and regresses afterwards,Genital tissues — most of the growth is completed by the age of puberty,None of the above,2,MEDMCQA,7
+Treatment of fibrous dysplasia is:,Radical resection of lesion,Radiation therapy,"If the Lesion is small, dissection is done, if Lesion is large cosmetic surgery has to be carried out",Cryosurgery,2,MEDMCQA,8
+Which is true regarding lathe cut silver alloy:,Requires least amount of mercury,Achieves lowest compressive strength at 1 hr.,Has tensile strength both at 15 min & 7 days comparable to high copper unicompositional alloy,Has Low creep,2,MEDMCQA,9
+"A traumatized tooth nonvital with or without crown
+fracture is classified as",Class-III,Class-IV,Class -V,Class-VII,1,MEDMCQA,10
+Pickling:,Is accomplished by soaking the casting in baking soda,Causes porosity in gold,Removes surface oxides from gold castings,Remove investment from gold casting,2,MEDMCQA,11
+Vasopressor of choice in pregnancy is:,Ephedrine,Phenylephrine,Methoxamine,Mephentermine,0,MEDMCQA,12
+"14 year old child with blindness, sensorineural hearing loss, progressive hematuria, hypeension with similar family history in father",Alpo syndrome,Goldenhar syndrome,Goodpasture syndrome,Nager syndrome,0,MEDMCQA,13
+"In a child, surgery was done for biliary stricture with hepatojejunal anastomosis. Postoperative bilirubin level after 2 weeks was 6 mg/dL from a preoperative level 12mg/dL. The reason for this could be:",Normal lowering of bilirubin takes time,Anastomotic stricture,Delta bilirubin,Mistake in lab technique,2,MEDMCQA,14
+"A G2 P1+0+0 diabetic mother present at 32 weeks pregnancy, there is history of full term fetal demise in last pregnancy. Her vitals are stable, sugar is controlled and fetus is stable. Which among the following will be the most appropriate management?",To induce at 38 weeks,To induce at 40 weeks,Cesarean section at 38 weeks,To wait for spontaneous delivery,0,MEDMCQA,15
+Restriction endonuclease cuts at,AAGGAA,AAGAAG,AAGTTC,AAGCTT,3,MEDMCQA,16
+Which one of the following antibiotics chelates with calcium ?,Penicillin,Tetracycline,Cephalosporins,Erythromycin,1,MEDMCQA,17
+High content of cholesterol is present in:,Coconut oil,Egg yolk,Hydrogenated fat,Ghee (unsaturated),1,MEDMCQA,18
+Mode is,Value that most frequently occurs in a set of observation,When observations are arranged in ascending or descending order the value that comes in the centre,Calculated by adding up the values of a group of items and dividing the sum by the number of items,Best measure for central tendency in a highly scented distribution,0,MEDMCQA,19
