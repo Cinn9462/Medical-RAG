@@ -4,8 +4,8 @@ import seaborn as sns
 import numpy as np
 
 # Read both dataframes
-mcqa_df = pd.read_csv("results/baseline_mcqa.csv")   # 4 options (probA‑D)
-qa_df   = pd.read_csv("results/baseline_qa.csv")     # 5 options (probA‑E)
+mcqa_df = pd.read_csv("medmcqa_results.csv")   # 4 options (probA‑D)
+qa_df   = pd.read_csv("medqa_results.csv")     # 5 options (probA‑E)
 
 # Add missing probE column to the 4‑option dataframe
 mcqa_df['probE'] = 0.0
