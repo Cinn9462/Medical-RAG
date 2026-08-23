@@ -25,6 +25,10 @@ option_tokens = {
 }
 
 errors = 0
+# INSTRUCTIONS = "Output your answer as a single letter (A, B, C, D). No explanation"
+INSTRUCTIONS = """You are a helpful medical expert, and your task is to answer a multi-choice medical question. 
+Your goal is to select the most appropriate answer based on your medical knowledge and reasoning, as well as any additional context provided.
+Output your answer as a single letter (A, B, C, D). No explanation."""
 # endregion
 
 def _run_model(messages):
@@ -60,7 +64,7 @@ def _check_confident(inputs, last_token_logits):
 # returns [[probA, probB, probC, probD], time, confident flag]
 def eval_medmcqa(q):
     messages = [
-        {"role": "system", "content": "Output your answer as a single letter (A, B, C, D). No explanation"},
+        {"role": "system", "content": INSTRUCTIONS},
         {"role": "user", "content": f"""Question: {q["question"]}
     A) {q["a"]}
     B) {q["b"]}
@@ -86,7 +90,7 @@ Answer: """}
 # returns [[probA, probB, probC, probD, probE], time, confident flag]
 def eval_medqa(q):
     messages = [
-        {"role": "system", "content": "Output your answer as a single letter (A, B, C, D, E). No explanation"},
+        {"role": "system", "content": INSTRUCTIONS},
         {"role": "user", "content": f"""Question: {q["question"]}
     A) {q["a"]}
     B) {q["b"]}
@@ -119,7 +123,7 @@ def write(res, OUT_FILE):
 # Warmup
 print("Warming up model")
 warmup_messages = [
-    {"role": "system", "content": "Output your answer as a single letter (A, B, C, D). No explanation"},
+    {"role": "system", "content": INSTRUCTIONS},
     {"role": "user", "content": """Question: What is the capital of France?
     A) London
     B) Paris
