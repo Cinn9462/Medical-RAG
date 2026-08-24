@@ -322,14 +322,13 @@ for _ in range(10):
     _run_model(warmup_messages)
 torch.cuda.synchronize()
 
-for T in [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
+for T in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
     errors = 0
     # MEDMCQA
     print("Evaluating MedMCQA test")
     results = []
     df = pd.read_csv("question-set/medmcqa_1000.csv")
     for i, q in enumerate(df.to_dict("records")):
-        if T == 0.4: continue
         probs, time_taken, confident, search_results, confident_count, add_search_results = eval_medmcqa(q, T)
         results.append({
             "id": q["id"],
@@ -360,7 +359,6 @@ for T in [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
     results = []
     df = pd.read_csv("question-set/medqa_1273.csv")
     for i, q in enumerate(df.to_dict("records")):
-        if T == 0.4 and i <= 700: continue
         probs, time_taken, confident, search_results, confident_count, add_search_results = eval_medqa(q, T)
         results.append({
             "id": q["id"],

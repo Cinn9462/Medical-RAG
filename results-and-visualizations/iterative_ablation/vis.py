@@ -1,69 +1,52 @@
-import glob
-import re
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 import numpy as np
 
-RESULTS_DIR = "."  # change if your csvs live elsewhere
-FILENAME_RE = re.compile(r"(medmcqa|medqa)_results(?:_([\d.]+))?\.csv$")
+# region Ablation Calibration
+thresholds = []
+accuracies = []
+avg_times = []
 
-PROB_COLUMNS_BY_LETTER = ["probA", "probB", "probC", "probD", "probE"]
+for threshold in [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
+    mcqadf = pd.read_csv(f"results-and-visualizations/iterative_ablation/res/medmcqa_results_{threshold}.csv")
+    qadf = pd.read_csv(f"results-and-visualizations/iterative_ablation/res/medqa_results_{threshold}.csv")
+    mcqadf['probE'] = 0.0  # Add a column for probE with default value 0.0
+    df = pd.concat([mcqadf, qadf], ignore_index=True)
+    df['choice'] = df[["probA", "probB", "probC", "probD", "probE"]].idxmax(axis=1).str.extract(r'prob(\w)')[0]
+    df['result'] = df[["probA", "probB", "probC", "probD", "probE"]].values.argmax(axis=1) == df['answer']
 
+    accuracy = (df['result'].sum() / len(df) * 100)
+    avg_time = df['time'].mean()
+    thresholds.append(threshold)
+    accuracies.append(accuracy)
+    avg_times.append(avg_time)
 
-def accuracy_for_file(path):
-    df = pd.read_csv(path)
+fig, ax1 = plt.subplots(figsize=(8, 6))
 
-    prob_cols = [c for c in PROB_COLUMNS_BY_LETTER if c in df.columns]
-    if not prob_cols:
-        raise ValueError(f"No prob columns found in {path}")
+ax1.plot(thresholds, accuracies, marker='o', linestyle='-', color='b', label='Accuracy')
+ax1.set_xlabel('Threshold', fontsize=12)
+ax1.set_ylabel('Overall Accuracy (%)', fontsize=12, color='b')
+ax1.tick_params(axis='y', labelcolor='b')
+ax1.grid(True, linestyle='--', alpha=0.6)
+ax1.set_ylim(58, 66)
 
-    predicted = df[prob_cols].to_numpy().argmax(axis=1)
-    answer = df["answer"].astype(int).to_numpy()
-    correct = predicted == answer
+ax2 = ax1.twinx()
+ax2.plot(thresholds, avg_times, marker='o', linestyle='-', color='r', label='Avg Time')
+ax2.set_ylabel('Average Time (s)', fontsize=12, color='r')
+ax2.tick_params(axis='y', labelcolor='r')
+ax1.axvline(x=0.3, color='g', linestyle='--')
+ax1.set_xticks(thresholds[::2])
+ax1.set_xticklabels([f'{t:.1f}' for t in thresholds[::2]])
+ax1.set_xlim(0, 1.0)
 
-    error_rate = df["error"].astype(str).str.lower().eq("true").mean() if "error" in df.columns else float("nan")
-    avg_time = df["time"].mean() if "time" in df.columns else float("nan")
+lines1, labels1 = ax1.get_legend_handles_labels()
+lines2, labels2 = ax2.get_legend_handles_labels()
+ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
 
-    return {
-        "n": len(df),
-        "accuracy": correct.mean(),
-        "avg_time_sec": avg_time,
-        "error_rate": error_rate,
-    }
-
-
-def main():
-    rows = []
-    for path in sorted(glob.glob(f"{RESULTS_DIR}/*_results*.csv")):
-        m = FILENAME_RE.search(path)
-        if not m:
-            continue
-        dataset, threshold = m.group(1), m.group(2)
-        threshold = float(threshold) if threshold is not None else np.nan
-
-        stats = accuracy_for_file(path)
-        rows.append({"dataset": dataset, "threshold": threshold, "file": path, **stats})
-
-    if not rows:
-        print(f"No matching result files found under {RESULTS_DIR!r}.")
-        return
-
-    summary = pd.DataFrame(rows).sort_values(["dataset", "threshold"]).reset_index(drop=True)
-
-    print("\n=== Summary (one row per dataset x threshold) ===")
-    print(summary.to_string(index=False, formatters={
-        "accuracy": "{:.4f}".format,
-        "avg_time_sec": "{:.3f}".format,
-        "error_rate": "{:.4f}".format,
-    }))
-    summary.to_csv("accuracy_summary.csv", index=False)
-
-    pivot = summary.pivot_table(index="dataset", columns="threshold", values="accuracy")
-    print("\n=== Accuracy by dataset x threshold ===")
-    print(pivot.to_string(float_format="{:.4f}".format))
-    pivot.to_csv("accuracy_pivot.csv")
-
-    print("\nSaved accuracy_summary.csv and accuracy_pivot.csv")
-
-
-if __name__ == "__main__":
-    main()
+plt.title('Calibration Curve', fontsize=14)
+plt.xticks(thresholds, rotation=45)
+plt.tight_layout()
+plt.savefig('accuracy_vs_threshold_with_time.png', dpi=300)
+plt.show()
+# endregion Ablation Calibration
