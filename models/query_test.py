@@ -186,10 +186,10 @@ A) {q["a"]}
 B) {q["b"]}
 C) {q["c"]}
 D) {q["d"]}""")
-    start = t.time()
+    start = t.perf_counter()
     queries = get_query(q["question"], [q["a"], q["b"], q["c"], q["d"]],
                          [q["a"], q["b"], q["c"], q["d"]])
-    end = t.time()
+    end = t.perf_counter()
     times.append(end - start)
     for query in queries:
         print(query)

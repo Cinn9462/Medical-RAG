@@ -5,15 +5,18 @@ import time as t
 
 client = MilvusClient(uri="http://localhost:19530")
 embedding_model = SentenceTransformer("BAAI/bge-base-en-v1.5", trust_remote_code=True, device="cuda")
+COLLECTION = "MedRAG_combined_collection"
+client.release_collection(COLLECTION)
+client.load_collection(COLLECTION)
+print(client.get_load_state(COLLECTION))
+# print(client.list_collections())
+# for c in client.list_collections():
+#     print(f"Collection: {c}")
+#     print(client.get_collection_stats(c))
+#     print(client.get_load_state(c))
+#     print(client.describe_collection(c))
+#     print(client.list_indexes(c))
 
-print(client.list_collections())
-for c in client.list_collections():
-    print(f"Collection: {c}")
-    print(client.get_collection_stats(c))
-    print(client.get_load_state(c))
-    print(client.describe_collection(c))
-    print(client.list_indexes(c))
-          
 # print("Attempting to load textbook collection")
 # client.load_collection("MedRAG_textbook_collection")
 # print("Collection loaded")

@@ -37,11 +37,11 @@ def _run_model(messages):
     ).to("cuda")
 
     torch.cuda.synchronize()
-    start = t.time()
+    start = t.perf_counter()
     with torch.no_grad():
         outputs = model(**inputs, return_dict=True)
     torch.cuda.synchronize()
-    end = t.time()
+    end = t.perf_counter()
 
     last_token_logits = outputs.logits[0, -1, :]
     return inputs, last_token_logits, end - start

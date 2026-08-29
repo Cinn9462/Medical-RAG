@@ -42,7 +42,7 @@ USE_RERANKER = True
 
 
 def get_context(prompt, use_reranker=USE_RERANKER):
-    start = t.time()
+    start = t.perf_counter()
     query_embedding = embedding_model.encode(prompt, normalize_embeddings=True).tolist()
     search_limit = 15 if use_reranker else 5
 
@@ -70,7 +70,7 @@ def get_context(prompt, use_reranker=USE_RERANKER):
             r["rerank_score"] = score
         results = sorted(results, key=lambda x: x["rerank_score"], reverse=True)[:5]
 
-    return "\n\n".join([f"{r['content']}" for r in results]), results, t.time() - start
+    return "\n\n".join([f"{r['content']}" for r in results]), results, t.perf_counter() - start
 
 
 def _run_model_cot(messages, max_new_tokens=MAX_NEW_TOKENS):
@@ -86,7 +86,7 @@ def _run_model_cot(messages, max_new_tokens=MAX_NEW_TOKENS):
     prompt_len = inputs["input_ids"].shape[-1]
 
     torch.cuda.synchronize()
-    start = t.time()
+    start = t.perf_counter()
     with torch.no_grad():
         outputs = model.generate(
             **inputs,
@@ -97,7 +97,7 @@ def _run_model_cot(messages, max_new_tokens=MAX_NEW_TOKENS):
             pad_token_id=tokenizer.eos_token_id,
         )
     torch.cuda.synchronize()
-    end = t.time()
+    end = t.perf_counter()
 
     generated_ids = outputs.sequences[0][prompt_len:]
     generated_text = tokenizer.decode(generated_ids, skip_special_tokens=True)

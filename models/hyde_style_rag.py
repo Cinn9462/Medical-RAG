@@ -96,11 +96,11 @@ def _run_model(messages):
     ).to("cuda")
 
     torch.cuda.synchronize()
-    start = t.time()
+    start = t.perf_counter()
     with torch.inference_mode():
         outputs = model(**inputs, return_dict=True, logits_to_keep=1)
     torch.cuda.synchronize()
-    end = t.time()
+    end = t.perf_counter()
 
     last_token_logits = outputs.logits[0, -1, :]
     return inputs, last_token_logits, end - start
@@ -122,7 +122,7 @@ def _check_confident(inputs, last_token_logits, valid_letters):
 
 
 def get_context(prompt, use_reranker=USE_RERANKER):
-    start = t.time()
+    start = t.perf_counter()
     query_embedding = embedding_model.encode(prompt, normalize_embeddings=True).tolist()
     search_limit = 15 if use_reranker else 5
 
@@ -150,7 +150,7 @@ def get_context(prompt, use_reranker=USE_RERANKER):
             r["rerank_score"] = score
         results = sorted(results, key=lambda x: x["rerank_score"], reverse=True)[:5]
 
-    return "\n\n".join([f"{r['content']}" for r in results]), results, t.time() - start
+    return "\n\n".join([f"{r['content']}" for r in results]), results, t.perf_counter() - start
 
 
 def build_hyde_prompt(question, options):
@@ -182,7 +182,7 @@ def get_hyde_explanation(question, options):
     stopping_criteria = StoppingCriteriaList([StopOnSubstrings(tokenizer, ["\n\n"], prompt_len)])
 
     torch.cuda.synchronize()
-    start = t.time()
+    start = t.perf_counter()
     with torch.inference_mode():
         outputs = model.generate(
             **batch,
@@ -194,7 +194,7 @@ def get_hyde_explanation(question, options):
             pad_token_id=tokenizer.pad_token_id,
         )
     torch.cuda.synchronize()
-    elapsed = t.time() - start
+    elapsed = t.perf_counter() - start
 
     gen_tokens = outputs[0, prompt_len:]
     text = tokenizer.decode(gen_tokens, skip_special_tokens=True)
@@ -283,39 +283,40 @@ torch.cuda.synchronize()
 errors = 0
 
 # MEDMCQA
-print("Evaluating MedMCQA test")
-results = []
-df = pd.read_csv("question-set/medmcqa_1000.csv")
-for i, q in enumerate(df.to_dict("records")):
-    probs, time_taken, confident, search_results, explanation = eval_medmcqa(q)
-    results.append({
-        "id": q["id"],
-        "source": q["source"],
-        "probA": probs[0],
-        "probB": probs[1],
-        "probC": probs[2],
-        "probD": probs[3],
-        "answer": q["answer"],
-        "time": time_taken,
-        "error": not confident,
-        "sources": [r["source"] for r in search_results],
-        "ids": [r["id"] for r in search_results],
-        "similarity": [r["score"] for r in search_results],
-        "explanation": explanation,
-    })
-    if i % 100 == 0 and i != 0:
-        write(results, "medmcqa_results.csv")
-        results.clear()
+# print("Evaluating MedMCQA test")
+# results = []
+# df = pd.read_csv("question-set/medmcqa_1000.csv")
+# for i, q in enumerate(df.to_dict("records")):
+#     probs, time_taken, confident, search_results, explanation = eval_medmcqa(q)
+#     results.append({
+#         "id": q["id"],
+#         "source": q["source"],
+#         "probA": probs[0],
+#         "probB": probs[1],
+#         "probC": probs[2],
+#         "probD": probs[3],
+#         "answer": q["answer"],
+#         "time": time_taken,
+#         "error": not confident,
+#         "sources": [r["source"] for r in search_results],
+#         "ids": [r["id"] for r in search_results],
+#         "similarity": [r["score"] for r in search_results],
+#         "explanation": explanation,
+#     })
+#     if i % 100 == 0 and i != 0:
+#         write(results, "medmcqa_results.csv")
+#         results.clear()
 
-if results:
-    write(results, "medmcqa_results.csv")
-    results.clear()
+# if results:
+#     write(results, "medmcqa_results.csv")
+#     results.clear()
 
 # MEDQA
 print("Evaluating MedQA test")
 results = []
 df = pd.read_csv("question-set/medqa_1273.csv")
 for i, q in enumerate(df.to_dict("records")):
+    if i <= 200: continue
     probs, time_taken, confident, search_results, explanation = eval_medqa(q)
     results.append({
         "id": q["id"],

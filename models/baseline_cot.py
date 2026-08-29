@@ -46,7 +46,7 @@ def _run_model_cot(messages, max_new_tokens=MAX_NEW_TOKENS):
     prompt_len = inputs["input_ids"].shape[-1]
 
     torch.cuda.synchronize()
-    start = t.time()
+    start = t.perf_counter()
     with torch.no_grad():
         outputs = model.generate(
             **inputs,
@@ -57,7 +57,7 @@ def _run_model_cot(messages, max_new_tokens=MAX_NEW_TOKENS):
             pad_token_id=tokenizer.eos_token_id,
         )
     torch.cuda.synchronize()
-    end = t.time()
+    end = t.perf_counter()
 
     generated_ids = outputs.sequences[0][prompt_len:]
     generated_text = tokenizer.decode(generated_ids, skip_special_tokens=True)

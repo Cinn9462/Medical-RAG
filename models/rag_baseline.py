@@ -37,11 +37,11 @@ def _run_model(messages):
     ).to("cuda")
 
     torch.cuda.synchronize()
-    start = t.time()
+    start = t.perf_counter()
     with torch.no_grad():
         outputs = model(**inputs, return_dict=True)
     torch.cuda.synchronize()
-    end = t.time()
+    end = t.perf_counter()
 
     last_token_logits = outputs.logits[0, -1, :]
     return inputs, last_token_logits, end - start
@@ -62,7 +62,7 @@ def _check_confident(inputs, last_token_logits):
 
 
 def get_context(prompt, use_reranker=USE_RERANKER):
-    start = t.time()
+    start = t.perf_counter()
     query_embedding = embedding_model.encode(prompt, normalize_embeddings=True).tolist()
     search_limit = 15 if use_reranker else 5
 
@@ -90,7 +90,7 @@ def get_context(prompt, use_reranker=USE_RERANKER):
             r["rerank_score"] = score
         results = sorted(results, key=lambda x: x["rerank_score"], reverse=True)[:5]
     
-    return "\n\n".join([f"{r['content']}" for r in results]), results, t.time() - start
+    return "\n\n".join([f"{r['content']}" for r in results]), results, t.perf_counter() - start
 
 
 # returns [[probA, probB, probC, probD], time, confident flag, search_results]
@@ -129,14 +129,14 @@ Answer: """}
 
 # returns [[probA, probB, probC, probD, probE], time, confident flag, search_results]
 def eval_medqa(q):
-    start = t.time()
+    start = t.perf_counter()
     context, search_results, elapsed_retrieval = get_context(f"""Question: {q["question"]}
     A) {q["a"]}
     B) {q["b"]}
     C) {q["c"]}
     D) {q["d"]}
     E) {q["e"]}""", use_reranker=USE_RERANKER)
-    end = t.time()
+    end = t.perf_counter()
 
     messages = [
         {"role": "system", "content": "Use provided context and reasoning to guide your answer. Output your answer as a single letter (A, B, C, D, E). No explanation"},
