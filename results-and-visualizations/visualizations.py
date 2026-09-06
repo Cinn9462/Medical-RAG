@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
+plt.rcParams['font.family'] = 'Times New Roman'
+plt.rcParams['font.size'] = 8
+
 RAG_VISUALIZATIONS = False
 
 # Read both dataframes
@@ -17,6 +20,7 @@ mcqa_df['probE'] = 0.0
 
 # Combine into one DataFrame
 df = pd.concat([mcqa_df, qa_df], ignore_index=True)
+print(df["time"].mean())
 
 # ---- Compute derived columns ----
 prob_cols = ['probA', 'probB', 'probC', 'probD', 'probE']
@@ -56,7 +60,7 @@ colors = ['#ff9999','#66b3ff','#99ff99','#ffcc99','#c2c2f0']  # added 5th colour
 
 for ax, (counts, title) in zip(axes, data_list):
     ax.pie(counts, labels=counts.index, autopct='%1.1f%%',
-           startangle=90, colors=colors[:len(counts)])
+           textprops={'fontsize': 10}, startangle=90, colors=colors[:len(counts)])
     ax.set_title(f"{title} (n={sum(counts)})")
     ax.axis('equal')
 
@@ -65,57 +69,63 @@ plt.savefig('answer_pie_charts.png', bbox_inches='tight')
 plt.close()
 
 # ---- 2. Error by Confidence (KDE for each source + stacked bar overall) ----
-fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+fig, ax = plt.subplots(figsize=(3.5, 3.5))
 
-# MEDMCQA
-ax = axes[0]
+# DF
 for outcome, color, label in zip([True, False], ['blue', 'red'], ['Correct', 'Incorrect']):
-    subset = medmcqa_df[medmcqa_df['result'] == outcome]['p_top1']
+    subset = df[df['result'] == outcome]['p_top1']
     if not subset.empty:
         sns.kdeplot(subset, ax=ax, color=color, label=label, linewidth=2, fill=True, alpha=0.3)
 ax.set_xlabel('Maximum Predicted Probability')
 ax.set_ylabel('Density')
-ax.set_title('MEDMCQA - Confidence Distribution')
+ax.set_title('Confidence Distribution')
 ax.legend()
 ax.grid(alpha=0.3)
 ax.set_xlim(0, 1)
-
-# MEDQA
-ax = axes[1]
-for outcome, color, label in zip([True, False], ['blue', 'red'], ['Correct', 'Incorrect']):
-    subset = medqa_df[medqa_df['result'] == outcome]['p_top1']
-    if not subset.empty:
-        sns.kdeplot(subset, ax=ax, color=color, label=label, linewidth=2, fill=True, alpha=0.3)
-ax.set_xlabel('Maximum Predicted Probability')
-ax.set_ylabel('Density')
-ax.set_title('MEDQA - Confidence Distribution')
-ax.legend()
-ax.grid(alpha=0.3)
-ax.set_xlim(0, 1)
+plt.tight_layout()
+plt.savefig('confidence_density.png', dpi=300, bbox_inches='tight')
+plt.close()
 
 # Overall stacked bar by confidence level
-ax = axes[2]
-crosstab = pd.crosstab(df['confidence'], df['result'], normalize='index') * 100
-crosstab = crosstab.rename(columns={True: 'Correct', False: 'Incorrect'})
-crosstab[['Incorrect', 'Correct']].plot(kind='bar', stacked=True, ax=ax,
-                                        color=['red', 'blue'], edgecolor='black')
+crosstab = pd.crosstab(
+    df['confidence'],
+    df['result'],
+    normalize='index'
+) * 100
+
+crosstab = crosstab.rename(
+    columns={True: 'Correct', False: 'Incorrect'}
+)
+
+fig, ax = plt.subplots(figsize=(3.5, 3.5))  # ensure ax is defined
+
+crosstab[['Incorrect', 'Correct']].plot(
+    kind='bar',
+    stacked=True,
+    ax=ax,
+    color=['red', 'blue'],
+    edgecolor='black'
+)
+
 ax.set_xlabel('Confidence Level')
 ax.set_ylabel('Percentage (%)')
 ax.set_title('Outcome by Confidence Level')
-ax.legend(title='Outcome')
+
+# Remove legend (if you still want it removed)
+ax.get_legend().remove()
+
+# 50% reference line
 ax.axhline(y=50, color='gray', linestyle='--', alpha=0.7)
 ax.grid(axis='y', alpha=0.3)
 
-for i, conf in enumerate(crosstab.index):
-    total = len(df[df['confidence'] == conf])
-    ax.text(i, 102, f'n={total}', ha='center', va='bottom', fontsize=9)
+# --- No per‑bar text loop ---
 
 plt.tight_layout()
-plt.savefig('confidence_analysis.png', dpi=300, bbox_inches='tight')
+plt.savefig('accuracy_by_confidence.png', dpi=300, bbox_inches='tight')
 plt.close()
 
 # ---- 3. Probability Density of Margin (overall) ----
-fig, ax = plt.subplots(figsize=(10, 6))
+fig, ax = plt.subplots(figsize=(3.5, 3))
 for outcome, color, label in [(True, '#2ecc71', 'Correct'), (False, '#e74c3c', 'Incorrect')]:
     subset = df[df['result'] == outcome]['margin']
     if not subset.empty and subset.nunique() > 1:
@@ -157,7 +167,7 @@ if RAG_VISUALIZATIONS:
     for ax, (totals, title) in zip(axes, data):
         vals = [totals.get(k, 0) for k in source_keys]
         ax.pie(vals, labels=source_keys, autopct='%1.1f%%',
-               startangle=90, colors=colors[:len(source_keys)])
+               textprops={'fontsize': 10}, startangle=90, colors=colors[:len(source_keys)])
         ax.set_title(title)
         ax.axis('equal')
 
@@ -211,7 +221,7 @@ table = ax.table(cellText=table_df.values, colLabels=table_df.columns,
                  cellLoc='center', loc='center',
                  colColours=['#f0f0f0'] * len(table_df.columns))
 table.auto_set_font_size(False)
-table.set_fontsize(11)
+table.set_fontsize(10)
 table.scale(1.8, 2)
 plt.savefig('topk_accuracy_table.png', bbox_inches='tight', dpi=300)
 plt.close()

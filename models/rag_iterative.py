@@ -15,7 +15,7 @@ if tokenizer.pad_token_id is None:
     tokenizer.pad_token = tokenizer.eos_token
 
 model = AutoModelForCausalLM.from_pretrained(
-    model_name, device_map="cuda", attn_implementation="sdpa"
+    model_name, device_map="cuda", attn_implementation="sdpa", dtype=torch.bfloat16,
 )
 model.eval()
 
@@ -94,15 +94,11 @@ def _run_model(messages):
         messages, tokenize=True, add_generation_prompt=True, return_tensors="pt"
     ).to("cuda")
 
-    torch.cuda.synchronize()
-    start = t.perf_counter()
     with torch.inference_mode():
         outputs = model(**inputs, return_dict=True, logits_to_keep=1)
-    torch.cuda.synchronize()
-    end = t.perf_counter()
 
     last_token_logits = outputs.logits[0, -1, :]
-    return inputs, last_token_logits, end - start
+    return inputs, last_token_logits
 
 
 def _check_confident(inputs, last_token_logits, valid_letters):
@@ -121,7 +117,6 @@ def _check_confident(inputs, last_token_logits, valid_letters):
 
 
 def get_context(prompt, use_reranker=USE_RERANKER):
-    start = t.perf_counter()
     query_embedding = embedding_model.encode(prompt, normalize_embeddings=True).tolist()
     search_limit = 15 if use_reranker else 5
 
@@ -149,7 +144,7 @@ def get_context(prompt, use_reranker=USE_RERANKER):
             r["rerank_score"] = score
         results = sorted(results, key=lambda x: x["rerank_score"], reverse=True)[:5]
 
-    return "\n\n".join([f"{r['content']}" for r in results]), results, t.perf_counter() - start
+    return "\n\n".join([f"{r['content']}" for r in results]), results
 
 
 def build_querygen_prompt(question, options, opt):
@@ -205,7 +200,7 @@ def get_query(question, options, confident_options):
 
 def _iterative_answer(question, options, letters, context, initial_messages_fn, THRESHOLD):
     messages = initial_messages_fn(context)
-    inputs, last_token_logits, elapsed_model = _run_model(messages)
+    inputs, last_token_logits = _run_model(messages)
 
     option_logits = torch.tensor([last_token_logits[option_tokens[letter]] for letter in letters])
     probs = torch.softmax(option_logits, dim=0).tolist()
@@ -217,24 +212,26 @@ def _iterative_answer(question, options, letters, context, initial_messages_fn, 
         add_context = ""
         queries = get_query(question, options, [options[i] for i in confident_indices])
         for query in queries:
-            curr_context, curr_search_results, _ = get_context(query)
+            curr_context, curr_search_results = get_context(query)
             add_search_results.extend(curr_search_results)
             add_context += f"\n\n{curr_context}"
 
         combined_context = f"{add_context}\n\n{context}"
         messages = initial_messages_fn(combined_context)
-        inputs, last_token_logits, elapsed_model_2 = _run_model(messages)
-        elapsed_model += elapsed_model_2
+        inputs, last_token_logits = _run_model(messages)
 
-    return inputs, last_token_logits, elapsed_model, confident_indices, add_search_results
+    return inputs, last_token_logits, confident_indices, add_search_results
 
 
 # returns [[probA, probB, probC, probD], time, confident flag, search_results, confident_count, add_search_results]
 def eval_medmcqa(q, THRESHOLD):
+    torch.cuda.synchronize()
+    start = t.perf_counter()
+
     letters = ALL_OPTION_LETTERS[:4]
     options = [q["a"], q["b"], q["c"], q["d"]]
 
-    context, search_results, elapsed_retrieval = get_context(f"""Question: {q["question"]}
+    context, search_results = get_context(f"""Question: {q["question"]}
     A) {options[0]}
     B) {options[1]}
     C) {options[2]}
@@ -253,7 +250,7 @@ Question: {q["question"]}
 Answer: """},
         ]
 
-    inputs, last_token_logits, elapsed_model, confident_indices, add_search_results = _iterative_answer(
+    inputs, last_token_logits, confident_indices, add_search_results = _iterative_answer(
         q["question"], options, letters, context, initial_messages_fn, THRESHOLD
     )
     confident = _check_confident(inputs, last_token_logits, letters)
@@ -261,15 +258,21 @@ Answer: """},
     option_logits = [last_token_logits[option_tokens[letter]].item() for letter in letters]
     probs = torch.softmax(torch.tensor(option_logits), dim=0).tolist()
 
-    return [probs, elapsed_retrieval + elapsed_model, confident, search_results, len(confident_indices), add_search_results]
+    torch.cuda.synchronize()
+    elapsed = t.perf_counter() - start
+
+    return [probs, elapsed, confident, search_results, len(confident_indices), add_search_results]
 
 
 # returns [[probA, probB, probC, probD, probE], time, confident flag, search_results, confident_count, add_search_results]
 def eval_medqa(q, THRESHOLD):
+    torch.cuda.synchronize()
+    start = t.perf_counter()
+
     letters = ALL_OPTION_LETTERS[:5]
     options = [q["a"], q["b"], q["c"], q["d"], q["e"]]
 
-    context, search_results, elapsed_retrieval = get_context(f"""Question: {q["question"]}
+    context, search_results = get_context(f"""Question: {q["question"]}
     A) {options[0]}
     B) {options[1]}
     C) {options[2]}
@@ -290,7 +293,7 @@ Question: {q["question"]}
 Answer: """},
         ]
 
-    inputs, last_token_logits, elapsed_model, confident_indices, add_search_results = _iterative_answer(
+    inputs, last_token_logits, confident_indices, add_search_results = _iterative_answer(
         q["question"], options, letters, context, initial_messages_fn, THRESHOLD
     )
     confident = _check_confident(inputs, last_token_logits, letters)
@@ -298,7 +301,10 @@ Answer: """},
     option_logits = [last_token_logits[option_tokens[letter]].item() for letter in letters]
     probs = torch.softmax(torch.tensor(option_logits), dim=0).tolist()
 
-    return [probs, elapsed_retrieval + elapsed_model, confident, search_results, len(confident_indices), add_search_results]
+    torch.cuda.synchronize()
+    elapsed = t.perf_counter() - start
+
+    return [probs, elapsed, confident, search_results, len(confident_indices), add_search_results]
 
 
 def write(res, out_file):
@@ -322,14 +328,15 @@ for _ in range(10):
     _run_model(warmup_messages)
 torch.cuda.synchronize()
 
-for T in [0.6, 0.7, 0.8, 0.9, 1.0]:
+for T in  [0.7, 0.8, 0.9, 1.0]:
+    torch.cuda.empty_cache()
     errors = 0
     # MEDMCQA
     print(f"Evaluating MedMCQA test {T}")
     results = []
     df = pd.read_csv("question-set/medmcqa_1000.csv")
     for i, q in enumerate(df.to_dict("records")):
-        if T == 0.6: continue
+        if T == 0.7 and i <= 500: continue
         probs, time_taken, confident, search_results, confident_count, add_search_results = eval_medmcqa(q, T)
         results.append({
             "id": q["id"],
@@ -355,12 +362,13 @@ for T in [0.6, 0.7, 0.8, 0.9, 1.0]:
         write(results, f"medmcqa_results_{T}.csv")
         results.clear()
 
+    torch.cuda.empty_cache()
+
     # MEDQA
     print(f"Evaluating MedQA test {T}")
     results = []
     df = pd.read_csv("question-set/medqa_1273.csv")
     for i, q in enumerate(df.to_dict("records")):
-        if i <= 300 and T == 0.6: continue
         probs, time_taken, confident, search_results, confident_count, add_search_results = eval_medqa(q, T)
         results.append({
             "id": q["id"],

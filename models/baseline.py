@@ -12,7 +12,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 model_name = "meta-llama/Llama-3.1-8B-Instruct"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name, device_map="cuda")
+model = AutoModelForCausalLM.from_pretrained(model_name, device_map="cuda", dtype=torch.bfloat16)
 model = torch.compile(model, mode="reduce-overhead")
 model.eval()
 
@@ -36,15 +36,11 @@ def _run_model(messages):
         messages, tokenize=True, add_generation_prompt=True, return_tensors="pt"
     ).to("cuda")
 
-    torch.cuda.synchronize()
-    start = t.perf_counter()
     with torch.no_grad():
         outputs = model(**inputs, return_dict=True)
-    torch.cuda.synchronize()
-    end = t.perf_counter()
 
     last_token_logits = outputs.logits[0, -1, :]
-    return inputs, last_token_logits, end - start
+    return inputs, last_token_logits
 
 
 def _check_confident(inputs, last_token_logits):
@@ -63,6 +59,9 @@ def _check_confident(inputs, last_token_logits):
 
 # returns [[probA, probB, probC, probD], time, confident flag]
 def eval_medmcqa(q):
+    torch.cuda.synchronize()
+    start = t.perf_counter()
+
     messages = [
         {"role": "system", "content": INSTRUCTIONS},
         {"role": "user", "content": f"""Question: {q["question"]}
@@ -73,7 +72,7 @@ def eval_medmcqa(q):
 Answer: """}
     ]
 
-    inputs, last_token_logits, elapsed = _run_model(messages)
+    inputs, last_token_logits = _run_model(messages)
     confident = _check_confident(inputs, last_token_logits)
 
     option_logits = [
@@ -84,11 +83,18 @@ Answer: """}
     ]
 
     probs = torch.softmax(torch.tensor(option_logits), dim=0).tolist()
+
+    torch.cuda.synchronize()
+    elapsed = t.perf_counter() - start
+
     return [probs, elapsed, confident]
 
 
 # returns [[probA, probB, probC, probD, probE], time, confident flag]
 def eval_medqa(q):
+    torch.cuda.synchronize()
+    start = t.perf_counter()
+
     messages = [
         {"role": "system", "content": INSTRUCTIONS},
         {"role": "user", "content": f"""Question: {q["question"]}
@@ -100,7 +106,7 @@ def eval_medqa(q):
 Answer: """}
     ]
 
-    inputs, last_token_logits, elapsed = _run_model(messages)
+    inputs, last_token_logits = _run_model(messages)
     confident = _check_confident(inputs, last_token_logits)
 
     option_logits = [
@@ -112,6 +118,10 @@ Answer: """}
     ]
 
     probs = torch.softmax(torch.tensor(option_logits), dim=0).tolist()
+
+    torch.cuda.synchronize()
+    elapsed = t.perf_counter() - start
+
     return [probs, elapsed, confident]
 
 def write(res, OUT_FILE):
@@ -131,7 +141,7 @@ warmup_messages = [
     D) Madrid
 Answer: """}
 ]
-for _ in range(5):
+for _ in range(10):
     _run_model(warmup_messages)
 torch.cuda.synchronize()
 

@@ -15,7 +15,7 @@ from sentence_transformers import SentenceTransformer, CrossEncoder
 
 model_name = "meta-llama/Llama-3.1-8B-Instruct"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name, device_map="cuda")
+model = AutoModelForCausalLM.from_pretrained(model_name, device_map="cuda", dtype = torch.bfloat16)
 model = torch.compile(model, mode="reduce-overhead")
 model.eval()
 

@@ -7,9 +7,11 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from pymilvus import MilvusClient
 from sentence_transformers import SentenceTransformer, CrossEncoder
 
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
 model_name = "meta-llama/Llama-3.1-8B-Instruct"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name, device_map="cuda")
+model = AutoModelForCausalLM.from_pretrained(model_name, device_map="cuda", dtype = torch.bfloat16)
 model.eval()
 
 embedding_model = SentenceTransformer("BAAI/bge-base-en-v1.5", trust_remote_code=True, device="cuda")
@@ -36,15 +38,11 @@ def _run_model(messages):
         messages, tokenize=True, add_generation_prompt=True, return_tensors="pt"
     ).to("cuda")
 
-    torch.cuda.synchronize()
-    start = t.perf_counter()
     with torch.no_grad():
         outputs = model(**inputs, return_dict=True)
-    torch.cuda.synchronize()
-    end = t.perf_counter()
 
     last_token_logits = outputs.logits[0, -1, :]
-    return inputs, last_token_logits, end - start
+    return inputs, last_token_logits
 
 
 def _check_confident(inputs, last_token_logits):
@@ -62,7 +60,6 @@ def _check_confident(inputs, last_token_logits):
 
 
 def get_context(prompt, use_reranker=USE_RERANKER):
-    start = t.perf_counter()
     query_embedding = embedding_model.encode(prompt, normalize_embeddings=True).tolist()
     search_limit = 15 if use_reranker else 5
 
@@ -90,12 +87,15 @@ def get_context(prompt, use_reranker=USE_RERANKER):
             r["rerank_score"] = score
         results = sorted(results, key=lambda x: x["rerank_score"], reverse=True)[:5]
     
-    return "\n\n".join([f"{r['content']}" for r in results]), results, t.perf_counter() - start
+    return "\n\n".join([f"{r['content']}" for r in results]), results
 
 
 # returns [[probA, probB, probC, probD], time, confident flag, search_results]
 def eval_medmcqa(q):
-    context, search_results, elapsed_retrieval = get_context(f"""Question: {q["question"]}
+    torch.cuda.synchronize()
+    start = t.perf_counter()
+
+    context, search_results = get_context(f"""Question: {q["question"]}
     A) {q["a"]}
     B) {q["b"]}
     C) {q["c"]}
@@ -113,7 +113,7 @@ Question: {q["question"]}
 Answer: """}
     ]
 
-    inputs, last_token_logits, elapsed_model = _run_model(messages)
+    inputs, last_token_logits = _run_model(messages)
     confident = _check_confident(inputs, last_token_logits)
 
     option_logits = [
@@ -124,19 +124,24 @@ Answer: """}
     ]
 
     probs = torch.softmax(torch.tensor(option_logits), dim=0).tolist()
-    return [probs, elapsed_retrieval + elapsed_model, confident, search_results]
+
+    torch.cuda.synchronize()
+    elapsed = t.perf_counter() - start
+
+    return [probs, elapsed, confident, search_results]
 
 
 # returns [[probA, probB, probC, probD, probE], time, confident flag, search_results]
 def eval_medqa(q):
+    torch.cuda.synchronize()
     start = t.perf_counter()
-    context, search_results, elapsed_retrieval = get_context(f"""Question: {q["question"]}
+
+    context, search_results = get_context(f"""Question: {q["question"]}
     A) {q["a"]}
     B) {q["b"]}
     C) {q["c"]}
     D) {q["d"]}
     E) {q["e"]}""", use_reranker=USE_RERANKER)
-    end = t.perf_counter()
 
     messages = [
         {"role": "system", "content": "Use provided context and reasoning to guide your answer. Output your answer as a single letter (A, B, C, D, E). No explanation"},
@@ -151,7 +156,7 @@ Question: {q["question"]}
 Answer: """}
     ]
 
-    inputs, last_token_logits, elapsed_model = _run_model(messages)
+    inputs, last_token_logits = _run_model(messages)
     confident = _check_confident(inputs, last_token_logits)
 
     option_logits = [
@@ -163,7 +168,11 @@ Answer: """}
     ]
 
     probs = torch.softmax(torch.tensor(option_logits), dim=0).tolist()
-    return [probs, elapsed_retrieval + elapsed_model, confident, search_results]
+
+    torch.cuda.synchronize()
+    elapsed = t.perf_counter() - start
+
+    return [probs, elapsed, confident, search_results]
 
 def write(res, OUT_FILE):
     df = pd.DataFrame(res)
@@ -220,6 +229,7 @@ print("Evaluating MedMCQA test")
 results = []
 df = pd.read_csv("question-set/medmcqa_1000.csv")
 for i, q in enumerate(df.to_dict("records")):
+    if True: continue
     probs, time, confident, search_results = eval_medmcqa(q)
     results.append({
         "id": q["id"],
@@ -248,7 +258,7 @@ print("Evaluating MedQA test")
 results = []
 df = pd.read_csv("question-set/medqa_1273.csv")
 for i, q in enumerate(df.to_dict("records")):
-    if i <= 100: continue
+    if i <= 1000: continue
     probs, time, confident, search_results = eval_medqa(q)
     results.append({
         "id": q["id"],

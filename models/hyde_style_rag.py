@@ -15,7 +15,7 @@ if tokenizer.pad_token_id is None:
     tokenizer.pad_token = tokenizer.eos_token
 
 model = AutoModelForCausalLM.from_pretrained(
-    model_name, device_map="cuda", attn_implementation="sdpa"
+    model_name, device_map="cuda", attn_implementation="sdpa", dtype = torch.bfloat16
 )
 model.eval()
 

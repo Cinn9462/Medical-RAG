@@ -17,16 +17,6 @@ print(client.get_load_state(COLLECTION))
 #     print(client.describe_collection(c))
 #     print(client.list_indexes(c))
 
-# print("Attempting to load textbook collection")
-# client.load_collection("MedRAG_textbook_collection")
-# print("Collection loaded")
-# client.release_collection("MedRAG_textbook_collection")
-# client.release_collection("MedRAG_statpearls_collection")
-# client.release_collection("MedRAG_pubmed_collection")
-# client.load_collection("MedRAG_textbook_collection")
-# client.load_collection("MedRAG_statpearls_collection")
-# client.load_collection("MedRAG_pubmed_collection")
-
 # def get_context(prompt):
 
 #     query_embedding = embedding_model.encode(prompt, normalize_embeddings=True).tolist()

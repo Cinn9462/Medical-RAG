@@ -15,7 +15,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 model_name = "meta-llama/Llama-3.1-8B-Instruct"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name, device_map="cuda")
+model = AutoModelForCausalLM.from_pretrained(model_name, device_map="cuda", dtype = torch.bfloat16)
 model = torch.compile(model, mode="reduce-overhead")
 model.eval()
 
@@ -35,7 +35,7 @@ errors = 0
 
 def _run_model_cot(messages, max_new_tokens=MAX_NEW_TOKENS):
     """Runs full generation (CoT) and returns the generated token ids/text,
-    per-step logits (scores), and elapsed time."""
+    per-step logits (scores)."""
     inputs = tokenizer.apply_chat_template(
         messages,
         tokenize=True,
@@ -45,8 +45,6 @@ def _run_model_cot(messages, max_new_tokens=MAX_NEW_TOKENS):
     ).to("cuda")
     prompt_len = inputs["input_ids"].shape[-1]
 
-    torch.cuda.synchronize()
-    start = t.perf_counter()
     with torch.no_grad():
         outputs = model.generate(
             **inputs,
@@ -56,14 +54,12 @@ def _run_model_cot(messages, max_new_tokens=MAX_NEW_TOKENS):
             output_scores=True,
             pad_token_id=tokenizer.eos_token_id,
         )
-    torch.cuda.synchronize()
-    end = t.perf_counter()
 
     generated_ids = outputs.sequences[0][prompt_len:]
     generated_text = tokenizer.decode(generated_ids, skip_special_tokens=True)
     scores = outputs.scores  # tuple of length num_generated_tokens, each [1, vocab]
 
-    return generated_ids, generated_text, scores, end - start
+    return generated_ids, generated_text, scores
 
 
 def _extract_answer_letter_and_logits(generated_ids, scores):
@@ -86,6 +82,9 @@ def _probs_from_logits(logits, valid_letters):
 
 # returns [[probA, probB, probC, probD], time, confident flag, cot_text, answer_letter]
 def eval_medmcqa(q):
+    torch.cuda.synchronize()
+    start = t.perf_counter()
+
     messages = [
         {
             "role": "system",
@@ -109,7 +108,7 @@ Think step by step, then finish with 'Answer: <letter>'.""",
         },
     ]
 
-    generated_ids, generated_text, scores, elapsed = _run_model_cot(messages)
+    generated_ids, generated_text, scores = _run_model_cot(messages)
     answer_letter, answer_logits = _extract_answer_letter_and_logits(generated_ids, scores)
 
     confident = answer_letter is not None
@@ -119,11 +118,17 @@ Think step by step, then finish with 'Answer: <letter>'.""",
         print(f"Warning: could not parse an answer letter from generated text:\n{generated_text}")
         probs = [0.25, 0.25, 0.25, 0.25]
 
+    torch.cuda.synchronize()
+    elapsed = t.perf_counter() - start
+
     return [probs, elapsed, confident]
 
 
 # returns [[probA, probB, probC, probD, probE], time, confident flag, cot_text, answer_letter]
 def eval_medqa(q):
+    torch.cuda.synchronize()
+    start = t.perf_counter()
+
     messages = [
         {
             "role": "system",
@@ -148,7 +153,7 @@ Think step by step, then finish with 'Answer: <letter>'.""",
         },
     ]
 
-    generated_ids, generated_text, scores, elapsed = _run_model_cot(messages)
+    generated_ids, generated_text, scores = _run_model_cot(messages)
     answer_letter, answer_logits = _extract_answer_letter_and_logits(generated_ids, scores)
 
     confident = answer_letter is not None
@@ -157,6 +162,9 @@ Think step by step, then finish with 'Answer: <letter>'.""",
     else:
         print(f"Warning: could not parse an answer letter from generated text:\n{generated_text}")
         probs = [0.2, 0.2, 0.2, 0.2, 0.2]
+
+    torch.cuda.synchronize()
+    elapsed = t.perf_counter() - start
 
     return [probs, elapsed, confident]
 
@@ -188,7 +196,7 @@ warmup_messages = [
 Think step by step, then finish with 'Answer: <letter>'.""",
     },
 ]
-for _ in range(5):
+for _ in range(10):
     _run_model_cot(warmup_messages, max_new_tokens=32)
 torch.cuda.synchronize()
 
