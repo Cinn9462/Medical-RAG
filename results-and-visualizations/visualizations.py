@@ -12,8 +12,8 @@ plt.rcParams['font.size'] = 8
 RAG_VISUALIZATIONS = False
 
 # Read both dataframes
-mcqa_df = pd.read_csv("medmcqa_results.csv")   # 4 options (probA‑D)
-qa_df   = pd.read_csv("medqa_results.csv")     # 5 options (probA‑E)
+mcqa_df = pd.read_csv("results-and-visualizations/iterative_0.4/medmcqa_results.csv")   # 4 options (probA‑D)
+qa_df   = pd.read_csv("results-and-visualizations/iterative_0.4/medqa_results.csv")     # 5 options (probA‑E)
 
 # Add missing probE column to the 4‑option dataframe
 mcqa_df['probE'] = 0.0
@@ -86,39 +86,25 @@ plt.tight_layout()
 plt.savefig('confidence_density.png', dpi=300, bbox_inches='tight')
 plt.close()
 
-# Overall stacked bar by confidence level
-crosstab = pd.crosstab(
-    df['confidence'],
-    df['result'],
-    normalize='index'
-) * 100
+# Accuracy by Confidence
+counts = df.groupby('confidence', observed=False)['result'].count()
+crosstab = (pd.crosstab(df['confidence'], df['result'], normalize='index') * 100) \
+             .rename(columns={True: 'Correct', False: 'Incorrect'})
 
-crosstab = crosstab.rename(
-    columns={True: 'Correct', False: 'Incorrect'}
-)
+print(crosstab['Correct'])
 
-fig, ax = plt.subplots(figsize=(3.5, 3.5))  # ensure ax is defined
+fig, ax = plt.subplots(figsize=(3.5, 3.5))
+crosstab[['Correct', 'Incorrect']].plot(kind='bar', stacked=True, ax=ax,
+                                         color=['blue', 'red'], edgecolor='black')
 
-crosstab[['Incorrect', 'Correct']].plot(
-    kind='bar',
-    stacked=True,
-    ax=ax,
-    color=['red', 'blue'],
-    edgecolor='black'
-)
-
-ax.set_xlabel('Confidence Level')
-ax.set_ylabel('Percentage (%)')
-ax.set_title('Outcome by Confidence Level')
-
-# Remove legend (if you still want it removed)
+ax.set(xlabel='Confidence Level', ylabel='Percentage (%)',
+       title='Outcome by Confidence Level', ylim=(0, 115))
 ax.get_legend().remove()
-
-# 50% reference line
 ax.axhline(y=50, color='gray', linestyle='--', alpha=0.7)
 ax.grid(axis='y', alpha=0.3)
 
-# --- No per‑bar text loop ---
+for i, level in enumerate(crosstab.index):
+    ax.text(i, 102, f'n = {counts.loc[level]}', ha='center', va='bottom', fontsize=9)
 
 plt.tight_layout()
 plt.savefig('accuracy_by_confidence.png', dpi=300, bbox_inches='tight')
