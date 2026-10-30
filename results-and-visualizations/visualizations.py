@@ -8,12 +8,12 @@ import numpy as np
 
 plt.rcParams['font.family'] = 'Times New Roman'
 plt.rcParams['font.size'] = 8
-
+    
 RAG_VISUALIZATIONS = False
 
 # Read both dataframes
-mcqa_df = pd.read_csv("results-and-visualizations/iterative_0.4/medmcqa_results.csv")   # 4 options (probA‑D)
-qa_df   = pd.read_csv("results-and-visualizations/iterative_0.4/medqa_results.csv")     # 5 options (probA‑E)
+mcqa_df = pd.read_csv("results-and-visualizations/baseline/medmcqa_results.csv")   # 4 options (probA‑D)
+qa_df   = pd.read_csv("results-and-visualizations/baseline/medqa_results.csv")     # 5 options (probA‑E)
 
 # Add missing probE column to the 4‑option dataframe
 mcqa_df['probE'] = 0.0
@@ -111,7 +111,7 @@ plt.savefig('accuracy_by_confidence.png', dpi=300, bbox_inches='tight')
 plt.close()
 
 # ---- 3. Probability Density of Margin (overall) ----
-fig, ax = plt.subplots(figsize=(3.5, 3))
+fig, ax = plt.subplots(figsize=(3.5, 3.5))
 for outcome, color, label in [(True, '#2ecc71', 'Correct'), (False, '#e74c3c', 'Incorrect')]:
     subset = df[df['result'] == outcome]['margin']
     if not subset.empty and subset.nunique() > 1:
@@ -211,3 +211,5 @@ table.set_fontsize(10)
 table.scale(1.8, 2)
 plt.savefig('topk_accuracy_table.png', bbox_inches='tight', dpi=300)
 plt.close()
+
+print (sum(df["result"])/len(df["result"]))
