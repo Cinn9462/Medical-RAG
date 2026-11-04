@@ -9,11 +9,11 @@ import numpy as np
 plt.rcParams['font.family'] = 'Times New Roman'
 plt.rcParams['font.size'] = 8
     
-RAG_VISUALIZATIONS = False
+RAG_VISUALIZATIONS = True
 
 # Read both dataframes
-mcqa_df = pd.read_csv("results-and-visualizations/baseline/medmcqa_results.csv")   # 4 options (probA‑D)
-qa_df   = pd.read_csv("results-and-visualizations/baseline/medqa_results.csv")     # 5 options (probA‑E)
+mcqa_df = pd.read_csv("results-and-visualizations/rag_rr/medmcqa_results.csv")   # 4 options (probA‑D)
+qa_df   = pd.read_csv("results-and-visualizations/rag_rr/medqa_results.csv")     # 5 options (probA‑E)
 
 # Add missing probE column to the 4‑option dataframe
 mcqa_df['probE'] = 0.0
