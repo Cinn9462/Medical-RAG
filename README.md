@@ -18,7 +18,7 @@ For retrieval, the code embeds the question or candidate-specific query with `BA
 
 ## Datasets
 
-The paper's final evaluation set contains approximately 1.6k questions across two multiple-choice medical QA datasets. A separate 1k-question training/calibration set is used for the ablation sweep and threshold selection; it is not the evaluation-set size.
+The paper's final evaluation set contains 1,673 questions across two multiple-choice medical QA datasets. A separate 600-question test set is used for the ablation sweep and threshold selection.
 
 | Dataset | Prepared questions in this repository | Format |
 | --- | ---: | --- |
@@ -27,7 +27,7 @@ The paper's final evaluation set contains approximately 1.6k questions across tw
 
 `question-set/medqa_raw.jsonl` contains the MedQA source records used to prepare `medqa_1273.csv`. `medmcqa_1000.csv` is a 1,000-question subject-stratified sample from the MedMCQA validation split. The scripts also produce a 20-question MedMCQA sample for quick experiments. See the source dataset terms before reuse or redistribution.
 
-The prepared files contain 1,272 MedQA and 1,000 MedMCQA questions. The paper's reported evaluation uses the 1,673-question evaluation split, while the separate 1,000-question set is used to train/calibrate the ablation sweep and select the threshold. 
+The prepared files contain 1,273 MedQA and 1,000 MedMCQA questions. The paper's reported evaluation uses the 1,673-question evaluation split, while the separate 600-question test set is used for the ablation sweep and threshold selection.
 
 ## Models and retrieval components
 
@@ -54,7 +54,7 @@ The table below reports the paper's final comparison on the 1,673-question evalu
 | RAG dynamic (`τ = 0.4`) | 62.86% | 62.80% | 63.08% | 1.368 s |
 | Dynamic NoGate | 63.40% | **63.81%** | 63.10% | 3.66 s |
 
-The table values are from the paper's final evaluation and are distinct from the training/calibration sweep saved under `results-and-visualizations/iterative_calibration/`. The sweep explores threshold-dependent accuracy and latency using the 1000 training/calibration set; it supports choosing `τ = 0.4` for the reported RAG dynamic configuration.
+The table values are from the paper's final evaluation and are distinct from the ablation sweep saved under `results-and-visualizations/iterative_calibration/`. The sweep explores threshold-dependent accuracy and latency using the 600-question test set; it supports choosing `τ = 0.4` for the reported RAG dynamic configuration.
 
 Other experiment result folders include `baseline`, `baseline_cot`, `rag_baseline`, `rag_cot`, `rag_rr`, `hyde_rag`, `iterative_0.4`, and `iterative_1.0`. Their CSVs store per-question probabilities, answer labels, timing, error flags, and sometimes retrieved passage metadata. The ready-made `iterative_calibration/accuracy_vs_threshold_with_time.png` visualizes a calibration sweep. The results scripts were written at different stages and some target legacy paths, so inspect their configured paths before rerunning.
 
