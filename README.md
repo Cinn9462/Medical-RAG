@@ -27,7 +27,7 @@ The paper's final evaluation set contains approximately 1.6k questions across tw
 
 `question-set/medqa_raw.jsonl` contains the MedQA source records used to prepare `medqa_1273.csv`. `medmcqa_1000.csv` is a 1,000-question subject-stratified sample from the MedMCQA validation split. The scripts also produce a 20-question MedMCQA sample for quick experiments. See the source dataset terms before reuse or redistribution.
 
-The prepared files contain 1,272 MedQA and 1,000 MedMCQA questions. The paper's reported evaluation uses the 1,672-question evaluation split, while the separate 1,000-question set is used to train/calibrate the ablation sweep and select the threshold. 
+The prepared files contain 1,272 MedQA and 1,000 MedMCQA questions. The paper's reported evaluation uses the 1,673-question evaluation split, while the separate 1,000-question set is used to train/calibrate the ablation sweep and select the threshold. 
 
 ## Models and retrieval components
 
@@ -40,7 +40,7 @@ The prepared files contain 1,272 MedQA and 1,000 MedMCQA questions. The paper's 
 
 ## Results
 
-The table below reports the paper's final comparison on the approximately 1,672-question evaluation set. Latency is the reported per-question latency.
+The table below reports the paper's final comparison on the 1,673-question evaluation set. Latency is the reported per-question latency.
 
 | Model configuration | Overall accuracy | MedMCQA accuracy | MedQA accuracy | Per-question latency |
 | --- | ---: | ---: | ---: | ---: |
