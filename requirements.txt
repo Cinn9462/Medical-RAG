@@ -1,0 +1,14 @@
+# Core experiment and data dependencies. Install a CUDA-compatible PyTorch build
+# separately when the default pip wheel does not match the local CUDA runtime.
+torch
+transformers
+accelerate
+sentence-transformers
+pymilvus
+datasets
+pandas
+numpy
+matplotlib
+seaborn
+tqdm
+bitsandbytes; platform_system == "Linux"

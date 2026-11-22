@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+
+# Local caches and generated data
+.cache/
+cache/
+milvus/statpearls/raw/
+milvus/statpearls/chunk/
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
